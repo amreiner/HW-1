@@ -1,0 +1,176 @@
+---
+title: "Homework Assignment 1"
+author: "Alexander Reiner"
+date: 'Assigned: Oct 24, 2020, Due Sun Nov 01, 2020 11:59PM'
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+  pdf_document:
+    toc: true
+---
+
+```{r}
+# Data Manipulation
+nyc <- read.csv("nycflights.csv")
+
+# Delete the column named "X"
+nyc$X <- NULL
+
+#Recode columns as factors as needed
+nyc$carrier <- as.factor(nyc$carrier)
+nyc$flight <- as.factor(nyc$flight)
+nyc$tailnum <- as.factor(nyc$tailnum)
+nyc$origin <- as.factor(nyc$origin)
+nyc$dest <- as.factor(nyc$dest)
+
+#Add airgain column
+nyc$airgain <- c(nyc$dep_delay - nyc$arr_delay)
+```
+
+
+# Data Exploration
+
+### How Many Airlines are there?
+```{r, results= FALSE}
+# use length and levels function
+length(levels(nyc$carrier))
+```
+There are `r length(levels(nyc$carrier))` airlines
+
+### How many flights there were by the airline code oo?
+```{r, results= FALSE}
+# Use nrow
+nrow(nyc[nyc$carrier == "OO",])
+```
+There are `r nrow(nyc[nyc$carrier == "OO",])` flights from airline code OO.
+
+### How long is the shortest flight out of any NYC airport?
+```{r, results= FALSE}
+# Use min function
+
+min(nyc$air_time, na.rm = TRUE)
+```
+The shortest flight out of any NYC airport is `r min(nyc$air_time, na.rm = TRUE)` minutes.
+
+### How many flights were there by United Airlies on January 12th 2013?
+```{r}
+#Use nrow
+
+nrow(nyc[nyc$carrier == "UA" & nyc$year == 2013 & nyc$month == 1 & nyc$day ==12, ])
+  
+```
+On January 12, 2013, there were `r nrow(nyc[nyc$carrier == "UA" & nyc$year == 2013 & nyc$month == 1 & nyc$day ==12, ])` flights by United Airlines.
+
+# Arrival Delay
+
+### What was the average arrival delay for all airports and all airlines combined in January 2013?
+```{r}
+# Use mean function
+jan2013 <- nyc[nyc$month == 1, ]
+
+mean(jan2013$arr_delay, na.rm=TRUE)
+
+```
+The average arrival delay for all airports and airlines in January 2013 is `r mean(jan2013$arr_delay, na.rm=TRUE)` minutes.
+
+### What was the median arrival delay for all airports and all airlines combined in January 2013?
+```{r, results= FALSE}
+median(jan2013$arr_delay, na.rm = TRUE)
+
+```
+The median arrival delay for all airports and airlines in January 2013 is `r median(jan2013$arr_delay, na.rm = TRUE)` minutes.
+
+# Airline Performance
+
+### Average Arrival Delay by Airline
+
+```{r}
+# Use function tapply
+
+arr_delay_by_airline <- round(tapply(nyc$arr_delay, nyc$carrier, mean,  na.rm=TRUE), 2)
+
+arr_delay_by_airline
+
+```
+
+### Arrival Delay Barplot
+
+```{r}
+library(RColorBrewer)
+color <- brewer.pal(16, "Set1")
+
+barplot(sort(arr_delay_by_airline, decreasing = TRUE), xlab="Airline", col.lab = "red", ylab="Minutes", col=color, main= "Average Arrival Delays by Airline", cex.names = 0.53)
+```
+
+### Airline with the Highest Average Arrival Delay
+
+`r names(arr_delay_by_airline[max(arr_delay_by_airline) == arr_delay_by_airline])` airline has the highest average arrival delay.
+
+### Airline with the Lowest Average Arrival Delay
+
+`r names(arr_delay_by_airline[min(arr_delay_by_airline) == arr_delay_by_airline])` airline has the lowest average arrival delay.
+
+### Are there airlines that have negative average delay?
+
+Yes, there are two airlines: `r names(arr_delay_by_airline[(arr_delay_by_airline) <= 0])`.
+
+# Air Gain
+```{r}
+nyc$airgain <- c(nyc$dep_delay - nyc$arr_delay)
+```
+
+### Air Gain Statistics
+```{r, results= FALSE}
+round(mean(nyc$airgain, na.rm=TRUE), 2)
+max(nyc$airgain, na.rm=TRUE)
+min(nyc$airgain, na.rm=TRUE)
+```
+
+The average time gained is `r mean(nyc$airgain, na.rm=TRUE)` minutes.
+The most time gained on a single flight is `r max(nyc$airgain, na.rm=TRUE)` minutes.
+The least time gained on a single flight is `r min(nyc$airgain, na.rm=TRUE)` minutes.
+
+### Air-Time Gained By Month
+```{r}
+# Use function tapply
+airgain_by_distance <- round(tapply(nyc$airgain, nyc$month, mean,  na.rm=TRUE), 2)
+
+airgain_by_distance
+
+barplot(airgain_by_distance, xlab="Month", col.lab = "red", ylab="Minutes", col=color, main= "Average Time Made Up from Delays by Month", cex.names = 0.53)
+```
+
+### Air-Time Gained by Origin Airport
+```{r}
+# Use function tapply
+airgain_by_origin <- round(tapply(nyc$airgain, nyc$origin, mean,  na.rm=TRUE), 2)
+
+airgain_by_origin
+
+barplot(airgain_by_origin, xlab="Origin Airport", col.lab = "red", ylab="Minutes", col=color, main= "Average Time Made Up by Origin Airport", cex.names = 0.53)
+```
+
+### Do airlines actually gain any time when in air on average?
+Yes, airlines gain on average `r round(mean(nyc$airgain, na.rm = TRUE), 2)` minutes on average.
+
+### Average Airgain for Airlines
+```{r}
+# Use function tapply
+airgain_by_airline <- round(tapply(nyc$airgain, nyc$carrier, mean,  na.rm=TRUE), 2)
+
+airgain_by_airline
+```
+
+### Which airline made up the most amount of time while in air?
+`r names(airgain_by_airline[max(airgain_by_airline) == airgain_by_airline])` made up the most time while in air by `r max(airgain_by_airline, na.rm = TRUE)` minutes on average.
+
+### Which airline made up the least amount of time while in air?
+`r names(airgain_by_airline[min(airgain_by_airline) == airgain_by_airline])` made up the least time while in air by `r min(airgain_by_airline, na.rm = TRUE)` minutes on average.
+
+### Airgain by Airline
+```{r}
+barplot(sort(airgain_by_airline, ), xlab="Airline", col.lab = "red", ylab="Minutes", col=color, main= "Average Time Made Up from Delays by Airline", cex.names = 0.53)
+```
+
